@@ -10,6 +10,8 @@
   2. 나이판별 모델
   3. 성별판별 모델
   4. 웹캠 적용
+ 
+- 결과물물
 
 # 1. 개요
 노트북에 탑재되어 있는 웹캠을 활용하여 웹캠에 비친 사용자의 얼굴을 분석하여 성별, 나이 그리고 감정을 분석할 수 있는 기능을 구현해보았습니다.
@@ -327,7 +329,11 @@ cv2.destroyAllWindows()
 
 ```
 
+# 결과물
 
+![결과1](https://github.com/Yoon-Hee-Jae/cnn-deeplearning/assets/140389762/2e2878c0-2b0e-4ea1-becf-1ef2a74f90d7)
+![결과2](https://github.com/Yoon-Hee-Jae/cnn-deeplearning/assets/140389762/378ce5e4-5de1-4797-8b74-49f4d9682a27)
 
+웹캠을 통해 사람 얼굴이 인식될 경우 바운딩 박스와 함께 성별, 나이 그리고 감정 분석 결과가 나타나는 것을 볼 수 있음.
 
 
