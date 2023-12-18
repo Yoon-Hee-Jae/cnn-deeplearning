@@ -4,6 +4,7 @@
 - 개요
 - 사용 데이터
 - 모델 구성
+  0. 데이터 준비
   1. 감정분석 모델
   2. 나이판별 모델
   3. 성별판별 모델
@@ -33,13 +34,65 @@
 
 # 3. 모델 구성
 
-## 3-1. 감정분석 모델
+## 3-0. 데이터 준비
+<1. facial expression recognition competition da조
+input = Input(shape=(48, 48, 3))
 
+cnn1 = Conv2D(128, kernel_size=3, activation='relu')(input)
+cnn1 = Conv2D(128, kernel_size=3, activation='relu')(cnn1)
+cnn1 = Conv2D(128, kernel_size=3, activation='relu')(cnn1)
+cnn1 = MaxPool2D(pool_size=3, strides=2)(cnn1)
 
-## 3-2. 나이판별 모델
+cnn2 = Conv2D(128, kernel_size=3, activation='relu')(cnn1)
+cnn2 = Conv2D(128, kernel_size=3, activation='relu')(cnn2)
+cnn2 = Conv2D(128, kernel_size=3, activation='relu')(cnn2)
+cnn2 = MaxPool2D(pool_size=3, strides=2)(cnn2)
 
+dense = Flatten()(cnn2)
+dense = Dropout(0.2)(dense)
+dense = Dense(1024, activation='relu')(dense)
+dense = Dense(1024, activation='relu')(dense)
+
+output = Dense(1, activation='linear', name='age')(dense)
+
+model_age = Model(input, output)
+
+# Compile the model
+model_age.compile(optimizer=Adam(0.0001), loss='mse', metrics=['mae'])
+
+# Train the model
+history = model_age.fit(X_train, y_train, epochs=50, batch_size=32, validation_data=(X_test, y_test))
+
+```
 
 ## 3-3. 성별판별 모델
 
+< 성별판별 모델 구성 > 
+
+# Define the model
+input_shape = (48, 48, 3)
+input_layer = Input(shape=input_shape)
+
+```python
+# 모델 구조
+cnn1 = Conv2D(36, kernel_size=3, activation='relu')(input)
+cnn1 = MaxPool2D(pool_size=3, strides=2)(cnn1)
+cnn2 = Conv2D(64, kernel_size=3, activation='relu')(cnn1)
+cnn2 = MaxPool2D(pool_size=3, strides=2)(cnn2)
+cnn3 = Conv2D(128, kernel_size=3, activation='relu')(cnn2)
+cnn3 = MaxPool2D(pool_size=3, strides=2)(cnn3)
+
+dense = Flatten()(cnn3)
+dense = Dropout(0.2)(dense)
+dense = Dense(512, activation='relu')(dense)
+dense = Dense(512, activation='relu')(dense)
+output = Dense(1, activation='sigmoid', name='gender')(dense)
+model_sex = Model(input, output)
+model_sex.compile(optimizer=Adam(learning_rate=0.0001), loss='binary_crossentropy', metrics=['accuracy'])
+
+```
+
+# Train the model
+history = model_sex.fit(X_train, y_train, epochs=100, batch_size=32, validation_data=(X_test, y_test))
 
 ## 3-4. 웹캠 적용
