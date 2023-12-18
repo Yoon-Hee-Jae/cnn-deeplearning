@@ -39,6 +39,35 @@
 < 1. facial expression recognition competition data >
 
 ```python
+#data set array구조 reshape
+shape_x = 48
+shape_y = 48
+
+# X_train, y_train, X_test, y_test split
+X_train = train_df.iloc[:, 1].values # pixles
+y_train = train_df.iloc[:, 0].values # emotion
+
+X_test = test_df.iloc[:, 1].values # pixles
+y_test = test_df.iloc[:, 0].values # emotion
+
+# 전체데이터
+X = df.iloc[:, 1].values # pixles
+y = df.iloc[:, 0].values # emotion
+
+# array([array([....])]) 구조를 바꾸기 위한 np.vstack
+X_train = np.vstack(X_train)
+X_test = np.vstack(X_test)
+X = np.vstack(X)
+
+# 4차원 데이터셋 만들기 (데이터개수, x축, y축, rgb)
+X_train_ds = np.reshape(X_train, (X_train.shape[0], shape_x, shape_y, 1))
+y_train_ds = np.reshape(y_train, (y_train.shape[0], 1))
+
+X_test_ds = np.reshape(X_test, (X_test.shape[0], shape_x, shape_y, 1))
+y_test_ds = np.reshape(y_test, (y_test.shape[0], 1))
+
+print(X_train_ds.shape, y_train_ds.shape)
+print(X_test_ds.shape, y_test_ds.shape)
 
 ```
 
@@ -55,10 +84,55 @@
 
 ```python
 
+def detect_face(frame):
+    
+    # cascade pre-trained 모델 불러오기
+    face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
+    
+    # RGB를 gray scale로 바꾸기
+    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+    
+    # cascade 멀티스케일 분류
+    detected_faces = face_cascade.detectMultiScale(gray,
+                                                   scaleFactor = 1.1,
+                                                   minNeighbors = 6,
+                                                   minSize = (shape_x, shape_y),
+                                                   flags = cv2.CASCADE_SCALE_IMAGE
+                                                  )
+    
+    coord = []
+    for x, y, w, h in detected_faces:
+        if w > 100:
+            sub_img = frame[y:y+h, x:x+w]
+            coord.append([x, y, w, h])
+            
+    return gray, detected_faces, coord
 
+# 전체 이미지에서 찾아낸 얼굴을 추출하는 함수
+def extract_face_features(gray, detected_faces, coord, offset_coefficients=(0.075, 0.05)):
+    new_face = []
+    for det in detected_faces:
+        
+        # 얼굴로 감지된 영역
+        x, y, w, h = det
+        
+        # 이미지 경계값 받기
+        horizontal_offset = int(np.floor(offset_coefficients[0] * w))
+        vertical_offset = int(np.floor(offset_coefficients[1] * h))
 
+        
+        # gray scacle 에서 해당 위치 가져오기
+        extracted_face = gray[y+vertical_offset:y+h, x+horizontal_offset:x-horizontal_offset+w]
+        
+        # 얼굴 이미지만 확대
+        new_extracted_face = zoom(extracted_face, (shape_x/extracted_face.shape[0], shape_y/extracted_face.shape[1]))
+        new_extracted_face = new_extracted_face.astype(np.float32)
+        new_extracted_face /= float(new_extracted_face.max()) # sacled
+        new_face.append(new_extracted_face)
+        
+    return new_face
 
-
+```
 
 < 감정분석 모델 구성 > 
 ```python
