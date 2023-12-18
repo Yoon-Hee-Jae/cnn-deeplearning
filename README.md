@@ -35,7 +35,34 @@
 # 3. 모델 구성
 
 ## 3-0. 데이터 준비
-<1. facial expression recognition competition da조
+
+< 1. facial expression recognition competition data >
+
+```python
+
+```
+
+
+## 3-1. 감정분석 모델
+
+º 감정분석 모델의 경우 기본 합성곱 신경망을 사용하였습니다.
+
+º ImageDataGenerator를 사용하여 보다 더 다양한 이미지에 대한 학습이 이루어지도록 하였습니다.
+
+º 기존 이미지 데이터에서 얼굴만을 가져오는 함수를 만들어 성능 개선이 이루어지도록 하였습니다.
+
+< facedetecting 함수 >
+
+```python
+
+
+
+
+
+
+< 감정분석 모델 구성 > 
+```python
+
 input = Input(shape=(48, 48, 3))
 
 cnn1 = Conv2D(128, kernel_size=3, activation='relu')(input)
@@ -65,15 +92,53 @@ history = model_age.fit(X_train, y_train, epochs=50, batch_size=32, validation_d
 
 ```
 
+
+## 3-2. 나이판별 모델
+
+< 나이판별 모델 >
+
+```python
+
+# 입력
+input_shape = (48, 48, 3)
+input_layer = Input(shape=input_shape)
+
+# 모델 구성
+input = Input(shape=(48, 48, 3))
+
+cnn1 = Conv2D(128, kernel_size=3, activation='relu')(input)
+cnn1 = Conv2D(128, kernel_size=3, activation='relu')(cnn1)
+cnn1 = Conv2D(128, kernel_size=3, activation='relu')(cnn1)
+cnn1 = MaxPool2D(pool_size=3, strides=2)(cnn1)
+
+cnn2 = Conv2D(128, kernel_size=3, activation='relu')(cnn1)
+cnn2 = Conv2D(128, kernel_size=3, activation='relu')(cnn2)
+cnn2 = Conv2D(128, kernel_size=3, activation='relu')(cnn2)
+cnn2 = MaxPool2D(pool_size=3, strides=2)(cnn2)
+
+dense = Flatten()(cnn2)
+dense = Dropout(0.2)(dense)
+dense = Dense(1024, activation='relu')(dense)
+dense = Dense(1024, activation='relu')(dense)
+
+output = Dense(1, activation='linear', name='age')(dense)
+
+model_age = Model(input, output)
+
+# 모델 병합
+model_age.compile(optimizer=Adam(0.0001), loss='mse', metrics=['mae'])
+
+# 모델 학습
+history = model_age.fit(X_train, y_train, epochs=50, batch_size=32, validation_data=(X_test, y_test))
+
+```
+
 ## 3-3. 성별판별 모델
 
 < 성별판별 모델 구성 > 
 
-# Define the model
-input_shape = (48, 48, 3)
-input_layer = Input(shape=input_shape)
-
 ```python
+
 # 모델 구조
 cnn1 = Conv2D(36, kernel_size=3, activation='relu')(input)
 cnn1 = MaxPool2D(pool_size=3, strides=2)(cnn1)
@@ -90,9 +155,9 @@ output = Dense(1, activation='sigmoid', name='gender')(dense)
 model_sex = Model(input, output)
 model_sex.compile(optimizer=Adam(learning_rate=0.0001), loss='binary_crossentropy', metrics=['accuracy'])
 
-```
-
-# Train the model
+# 모델 학습
 history = model_sex.fit(X_train, y_train, epochs=100, batch_size=32, validation_data=(X_test, y_test))
+
+```
 
 ## 3-4. 웹캠 적용
