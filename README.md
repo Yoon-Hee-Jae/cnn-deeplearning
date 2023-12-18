@@ -4,6 +4,7 @@
 - 개요
 - 사용 데이터
 - 모델 구성
+
   0. 데이터 준비
   1. 감정분석 모델
   2. 나이판별 모델
@@ -235,3 +236,98 @@ history = model_sex.fit(X_train, y_train, epochs=100, batch_size=32, validation_
 ```
 
 ## 3-4. 웹캠 적용
+
+< 기존 학습한 모델들 불러오기 > 
+
+```python
+
+#model loads 
+emotion_model = keras.models.load_model("C:/Users/shj06/DL_data_for/DL/models/model_emotion_prediction.h5")
+age_model = keras.models.load_model("C:/Users/shj06/DL_data_for/DL/models/model_age_prediction.h5")
+sex_model = keras.models.load_model("C:/Users/shj06/DL_data_for/DL/models/model_sex_prediction.h5")
+
+```
+
+< 웹캠 화면에 바운딩 박스를 추가하고 모델 결과값 표시 >
+
+```python
+
+emotion_dict = {
+    0: 'Surprise',
+    1: 'Anger',
+    2: 'Disgust',
+    3: 'Happy',
+    4: 'Sadness',
+    5: 'Fear',
+    6: 'Neutral'
+}
+
+# Your face detection function (update it as per your requirement)
+def detect_face(frame):
+    face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
+    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+    faces = face_cascade.detectMultiScale(gray, 1.3, 5)
+    return faces
+
+video_capture = cv2.VideoCapture(0)
+
+while True:
+    ret, frame = video_capture.read()
+    if not ret:
+        break
+
+    # RGB로 변환
+    rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+    # 그레이스케일로 변환
+    gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+
+    faces = detect_face(frame)
+
+    for (x, y, w, h) in faces:
+        # 원본 컬러 이미지에서 얼굴 부분 추출 (성별 및 나이 예측용)
+        color_face = rgb_frame[y:y+h, x:x+w]
+        # 원본 그레이스케일 이미지에서 얼굴 부분 추출 (감정 예측용)
+        gray_face = gray_frame[y:y+h, x:x+w]
+
+        # 컬러 얼굴 이미지 처리
+        resized_color_face = cv2.resize(color_face, (48, 48))
+        normalized_color_face = resized_color_face / 255.0
+        reshaped_color_face = np.reshape(normalized_color_face, (1, 48, 48, 3))
+
+        # 그레이스케일 얼굴 이미지 처리
+        resized_gray_face = cv2.resize(gray_face, (48, 48))
+        normalized_gray_face = resized_gray_face / 255.0
+        reshaped_gray_face = np.reshape(normalized_gray_face, (1, 48, 48, 1))
+
+        # 예측
+        sex_preds = sex_model.predict(reshaped_color_face)
+        age_preds = age_model.predict(reshaped_color_face)
+        emotion_preds = emotion_model.predict(reshaped_gray_face)
+
+        # 결과 처리
+        sex_text = 'Female' if sex_preds[0][0] > 0.5 else 'Male'
+        age_text = str(int(age_preds[0][0]))
+        emotion_text = emotion_dict[np.argmax(emotion_preds[0])]
+
+        # 얼굴 주변에 사각형 그리기
+        cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 0, 255), 2)
+
+        # 결과 표시
+        cv2.putText(frame, f'Sex: {sex_text}', (x, y-30), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (36,255,12), 1)
+        cv2.putText(frame, f'Age: {age_text}', (x, y-15), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (36,255,12), 1)
+        cv2.putText(frame, f'Emotion: {emotion_text}', (x, y), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (36,255,12), 1)
+
+    cv2.imshow('Video', frame)
+
+    if cv2.waitKey(1) & 0xFF == ord('q'):
+        break
+
+video_capture.release()
+cv2.destroyAllWindows()
+
+```
+
+
+
+
+
